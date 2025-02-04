@@ -1,102 +1,92 @@
-# Obsidian Hotstrings Plugin
+# Obsidian to Anki Flashcards Exporter
 
-A plugin for [Obsidian](https://obsidian.md) that allows you to create custom text expansions (hotstrings) that automatically expand as you type.
+This plugin allows you to create Anki flashcards directly from your Obsidian notes and export them in a format compatible with Anki's import feature.
 
 ## Features
 
--   Create custom text expansions that trigger automatically while typing
--   Supports both simple and complex text replacements
--   Easy to configure through the plugin settings
--   Works in any note or editor within Obsidian
--   Hotstrings can be reloaded without restarting Obsidian
+- Create flashcards within your Obsidian notes using a simple syntax
+- Export flashcards to a dedicated `anki_cards` folder
+- Convert markdown files to txt format for Anki compatibility
+- Support for markdown headers in flashcard content
 
-## Installation
+## How to Use
 
-1. Open Obsidian Settings
-2. Go to Community Plugins and disable Safe Mode
-3. Click Browse and search for "Hotstrings"
-4. Install the plugin and enable it
+### Creating Flashcards
 
-## Usage
+In any Obsidian note, create flashcards using this format:
 
-### Creating Hotstrings
+```markdown
+What's your question? #flashcard
+This is the answer
 
-1. Open Obsidian Settings
-2. Navigate to the Hotstrings plugin settings
-3. Add new hotstrings in the format:
-    - Trigger: The text you type
-    - Expansion: The text it expands to
+You can have multiple lines in the answer
+And even format it
 
-Example:
-LOL~.~{Laugh Out Loud}
 
-### Using Hotstrings
+The next flashcard should start after TWO empty lines
+```
 
-Simply type your trigger text anywhere in Obsidian. The plugin will automatically replace it with your defined expansion.
+You can also use markdown headers in your flashcards:
 
-### Reloading Hotstrings
+```markdown
+# What is the capital of France? #flashcard
+Paris is the capital of France
 
-If you make changes to your hotstrings, you can reload them using the command palette:
+## Who wrote Hamlet? #flashcard
+William Shakespeare wrote Hamlet
+```
 
-1. Press `Ctrl/Cmd + P` to open the command palette
-2. Search for "Reload Hotstrings"
-3. Select the command to reload your changes
-   _Alternatively you can add a hotkey by clicking the plus button in the hotkey settings_
+### Exporting Flashcards
 
-## Examples
+1. Open the note containing your flashcards
+2. Open the command palette (Ctrl/Cmd + P)
+3. Run the command "Export current note to anki folder"
+4. The cards will be exported to the `anki_cards` folder in your vault
 
-Here are some useful hotstring examples:
+### Converting to TXT Format
 
--   `SIG~.~{Your signature saying how you are a nice person and proffesional or something}` → Your signature
--   `SUPA~.~{supercalifragilisticexpialidocious}` → Long word that you don't want to have to type
--   `MAILAD` → Your email address
+Important: Anki doesn't accept .md files for import. You need to convert the exported file to .txt format:
+
+1. Navigate to the `anki_cards` folder in your vault
+2. Open the exported flashcard file
+3. Open the command palette (Ctrl/Cmd + P)
+4. Run the command "Convert current file to txt"
+5. A new .txt file will be created in the same folder
+
+Note: The txt file won't be visible in the Obsidian editor, but you can see it in your file explorer. This is normal behavior as Obsidian is designed to work with markdown files.
+
+### Importing to Anki
+
+1. Open Anki
+2. Click "Import File"
+3. Select the .txt file you created
+4. Make sure to:
+   - Set the delimiter to Tab
+   - Check that "Allow HTML in fields" is enabled
+   - Select the appropriate note type and field mapping
+
+## Card Format
+
+- Front of card: Everything before #flashcard
+- Back of card: All text between the #flashcard line and two consecutive empty lines
+- Cards are separated by two empty lines
+- HTML line breaks (<br>) are automatically added between lines on the back of the card
 
 ## Tips
 
--   Use the quick add community plugin to easily add hotstrings to the hotstring file [git-repo](https://github.com/chhoumann/quickadd)
--   Hotstrings are case-sensitive by default
--   Triggers must be unique
--   Use the reload command after adding new hotstrings
+- Always convert your exported files to .txt before importing to Anki
+- Use markdown headers (#, ##, etc.) freely - they'll be properly processed
+- Make sure to end each card with two empty lines to properly separate them
+- Check the `anki_cards` folder in your vault for your exported files
 
 ## Troubleshooting
 
-If hotstrings aren't working:
+If you don't see your cards in Anki after import:
+1. Ensure you converted the file to .txt format
+2. Verify the file contains content by checking it in your system's file explorer
+3. Make sure you're using the correct delimiter (Tab) in Anki's import settings
 
-1. Check if the plugin is enabled under Community Plugins
-2. Try reloading the hotstrings using the command palette
-3. Ensure there are no conflicts with your hotstrings
-4. Restart Obsidian if issues persist
-
-## Support
-
-If you encounter any issues or have suggestions:
-
--   Open an issue on the GitHub repository
--   Include steps to reproduce the problem
--   Provide your Obsidian version and operating system
-
-## Contributing
-
-Contributions are always welcome! Here's how you can help:
-
-1. Fork the repository
-2. Create a new branch (`git checkout -b featureName`)
-3. Make your changes
-4. Test the code for a week or few days if you are a heavy user
-5. Commit your changes
-6. Push to the branch (`git push origin feature/improvement`)
-7. Create a Pull Request
-
-### Development Setup
-
-1. Clone your fork of the repository
-2. Install dependencies with `npm install`
-3. Make your changes in the `main.ts` file
-4. Build the plugin with `npm run dev`
-
-Please ensure your PR:
-
--   Follows the existing code style
--   Includes relevant documentation updates
--   Describes the changes made
--   References any related issues
+If no cards are being exported:
+1. Verify your cards end with #flashcard
+2. Check that you have two empty lines between cards (_sometimes adding two lines before the line with #flashcard will help)
+3. Make sure you're running the export command on a file that contains flashcards
