@@ -118,9 +118,14 @@ export default class AnkiExportPlugin extends Plugin {
 				if (currentCard) {
 					cards.push(currentCard);
 				}
+
+				// Start a new card
+				let frontText = line.replace("#flashcard", "").trim();
+				// Handle markdown headers by removing leading #s and their trailing space
+				frontText = frontText.replace(/^#{1,6}\s+/, "");
 				// Start a new card
 				currentCard = {
-					front: line.replace("#flashcard", "").trim(),
+					front: frontText,
 					back: [],
 				};
 				emptyLineCount = 0;
