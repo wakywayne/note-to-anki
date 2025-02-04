@@ -1,95 +1,166 @@
 import { App, Editor, MarkdownView, Plugin, TFile, Notice } from "obsidian";
 
-interface Hotstring {
-	trigger: string;
-	replacement: string;
+interface AnkiCard {
+	front: string;
+	back: string[];
 }
-
-export default class HotstringsPlugin extends Plugin {
-	private hotstrings: Hotstring[] = [];
-	private hotstringsFile: string = "hotstrings.md"; // File name for hotstrings
-
+export default class AnkiExportPlugin extends Plugin {
+	private ankiFolder: string = "anki_cards";
 	async onload() {
-		// Wait for layout to be ready before loading hotstrings
-		this.app.workspace.onLayoutReady(async () => {
-			await this.loadHotstrings();
-		});
-
-		// Add a command to reload hotstrings
 		this.addCommand({
-			id: "reload-hotstrings",
-			name: "Reload Hotstrings",
+			id: "export-to-anki-folder",
+			name: "Export current note to anki folder",
 			callback: async () => {
-				await this.loadHotstrings();
-				new Notice("Hotstrings reloaded!");
+				await this.exportCurrentNoteToAnkiFolder();
 			},
 		});
 
-		// Listen for editor changes to apply hotstrings
-		this.registerEvent(
-			this.app.workspace.on("editor-change", (editor: Editor) => {
-				this.handleEditorChange(editor);
-			}),
-		);
+		this.addCommand({
+			id: "convert-to-txt",
+			name: "Convert current file to txt",
+			callback: async () => {
+				await this.convertCurrentFileToTxt();
+			},
+		});
 	}
 
-	// Load hotstrings from the user's `hotstrings` file
-	private async loadHotstrings() {
-		this.hotstrings = []; // Reset current hotstrings
-		const file = this.app.vault.getAbstractFileByPath(this.hotstringsFile);
+	private async convertCurrentFileToTxt() {
+		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (!activeView) {
+			new Notice("No active markdown file");
+			return;
+		}
 
-		if (file instanceof TFile) {
-			// If the file exists, read and parse it
-			const content = await this.app.vault.read(file);
-			this.parseHotstrings(content);
-		} else {
-			// Create the file with a default comment if it doesn't exist
-			await this.app.vault.create(
-				this.hotstringsFile,
-				`#### Add your hotstrings below in the format:\n# trigger~.~{text string that you want}`,
-			);
-			new Notice(`Hotstrings file created: ${this.hotstringsFile}`);
+		const file = activeView.file;
+		if (!file) {
+			new Notice("No active file");
+			return;
+		}
+
+		const content = await this.app.vault.read(file);
+		const txtFileName = `${file.basename}.txt`;
+		const txtFilePath =
+			file.parent !== null && file.parent !== undefined
+				? `${file.parent.path}/${txtFileName}`
+				: new Error("File parent is null or undefined");
+
+		try {
+			if (typeof txtFilePath === "string") {
+				await this.app.vault.create(txtFilePath, content);
+				new Notice(`File converted to ${txtFileName}`);
+			} else if (txtFilePath instanceof Error) {
+				throw txtFilePath;
+			} else {
+				throw new Error(
+					"The file.parent is not null or undefined, but another exception has accured",
+				);
+			}
+		} catch (error) {
+			new Notice("Failed to convert file to txt");
+			console.error(error);
 		}
 	}
 
-	// Parse the content of the `hotstrings` file
-	private parseHotstrings(content: string) {
+	private async ensureAnkiFolder() {
+		const folderPath = this.ankiFolder;
+		const folder = this.app.vault.getAbstractFileByPath(folderPath);
+		if (!folder) {
+			await this.app.vault.createFolder(folderPath);
+		}
+	}
+
+	private async exportCurrentNoteToAnkiFolder() {
+		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (!activeView) {
+			new Notice("No active markdown file");
+			return;
+		}
+
+		const file = activeView.file;
+		if (!file) {
+			new Notice("No active file");
+			return;
+		}
+		const content = await this.app.vault.read(file);
+		const cards = this.parseFlashcards(content);
+
+		if (cards.length === 0) {
+			new Notice("No flashcards found in the current note");
+			return;
+		}
+
+		await this.ensureAnkiFolder();
+		const exportFileName = `${file.basename}_anki.md`;
+		const exportFilePath = `${this.ankiFolder}/${exportFileName}`;
+
+		const ankiContent = this.formatAnkiCards(cards);
+
+		try {
+			await this.app.vault.create(exportFilePath, ankiContent);
+			new Notice(`Anki cards exported to ${exportFilePath}`);
+		} catch (error) {
+			new Notice("Failed to export Anki cards");
+			console.error(error);
+		}
+	}
+
+	private parseFlashcards(content: string): AnkiCard[] {
 		const lines = content.split("\n");
-		lines.forEach((line) => {
-			// Ignore comments or empty lines
-			if (!line.trim() || line.startsWith("#")) return;
+		const cards: AnkiCard[] = [];
+		let currentCard: AnkiCard | null = null;
+		let emptyLineCount = 0;
 
-			// Match the trigger~.~{replacement} format
-			const match = line.match(/^(.+?)~\.~\{(.+?)\}$/);
-			if (match) {
-				const [, trigger, replacement] = match;
-				this.hotstrings.push({ trigger, replacement });
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i].trim();
+
+			if (line.endsWith("#flashcard")) {
+				// If we find a new card front, save the previous card if it exists
+				if (currentCard) {
+					cards.push(currentCard);
+				}
+				// Start a new card
+				currentCard = {
+					front: line.replace("#flashcard", "").trim(),
+					back: [],
+				};
+				emptyLineCount = 0;
+			} else if (currentCard) {
+				if (line === "") {
+					emptyLineCount++;
+					// Two consecutive empty lines mark the end of the card
+					if (emptyLineCount === 2) {
+						cards.push(currentCard);
+						currentCard = null;
+						emptyLineCount = 0;
+					}
+				} else {
+					// Reset empty line count when we encounter non-empty line
+					emptyLineCount = 0;
+					// Add non-empty lines to the back of the current card
+					currentCard.back.push(line);
+				}
 			}
-		});
+		}
+
+		// Don't forget to add the last card if it exists
+		if (currentCard) {
+			cards.push(currentCard);
+		}
+
+		return cards;
 	}
 
-	// Apply hotstrings in the editor when typing
-	private handleEditorChange(editor: Editor) {
-		const cursor = editor.getCursor();
-		const line = editor.getLine(cursor.line);
-
-		this.hotstrings.forEach(({ trigger, replacement }) => {
-			// Check if the line ends with a trigger
-			if (line.endsWith(trigger)) {
-				// Replace the trigger with the replacement text
-				const newLine = line.replace(
-					new RegExp(`${trigger}$`),
-					replacement,
-				);
-				editor.setLine(cursor.line, newLine);
-
-				// Move the cursor to the end of the replacement text
-				editor.setCursor({ line: cursor.line, ch: newLine.length });
-			}
-		});
-	}
-
-	onunload() {
-		console.log("HotstringsPlugin unloaded.");
+	private formatAnkiCards(cards: AnkiCard[]): string {
+		return cards
+			.map((card) => {
+				const back = card.back.join("<br>");
+				console.log({
+					card,
+					back,
+					result: `${card.front};${back}`,
+				});
+				return `${card.front};${back}`;
+			})
+			.join("\n");
 	}
 }

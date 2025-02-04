@@ -1,9 +1,9 @@
 {
-	"id": "hotstrings",
-	"name": "Hot Strings",
+	"id": "simple-note-to-anki",
+	"name": "Simple note to anki",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Allows you to set custom hot strings that get expanded to text once typed.",
+	"description": "Allows you to make an output file for anki from any note",
 	"author": "wakywayne",
 	"authorUrl": "https://github.com/wakywayne/wakywayne/blob/main/README.md",
 	"fundingUrl": "",
