@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "note-to-anki",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Simple solution to make an output file for anki from any note",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

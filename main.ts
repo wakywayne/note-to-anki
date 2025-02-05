@@ -4,6 +4,7 @@ interface AnkiCard {
 	front: string;
 	back: string[];
 }
+
 export default class AnkiExportPlugin extends Plugin {
 	private ankiFolder: string = "anki_cards";
 	async onload() {

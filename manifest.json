@@ -1,9 +1,9 @@
 {
-	"id": "simple-note-to-anki",
-	"name": "Simple note to anki",
+	"id": "note-to-anki",
+	"name": "note to anki",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Allows you to make an output file for anki from any note",
+	"description": "Simple solution to make an output file for anki from any note",
 	"author": "wakywayne",
 	"authorUrl": "https://github.com/wakywayne/wakywayne/blob/main/README.md",
 	"fundingUrl": "",
