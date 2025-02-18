@@ -1,6 +1,6 @@
 {
 	"id": "note-to-anki",
-	"name": "note to anki",
+	"name": "Note to Anki",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Simple solution to make an output file for anki from any note",
